@@ -2,8 +2,6 @@
 .include "header.inc"
 
 .segment "ZEROPAGE"
-baseHi:   .res 1
-baseLo:   .res 1
 megatile: .res 1
 stripNo:  .res 1
 
@@ -135,21 +133,15 @@ stripNo:  .res 1
   ; where to start writing attribute table
   LDA PPUSTATUS
   LDX #$23
-  STX baseHi
+  STX PPUADDR
   LDX #$C0
-  STX baseLo
+  STX PPUADDR
 
   LDX #$00
   write_attributes:
-    LDA baseHi
-    STA PPUADDR
-    LDA baseLo
-    STA PPUADDR
-
     LDY attributes,X
     STY PPUDATA
     INX
-    INC baseLo
 
     ; end loop when counter reaches 64
     CPX #$40
