@@ -2,13 +2,35 @@
 .include "header.inc"
 
 .segment "ZEROPAGE"
+
+; background generation
 megatile: .res 1
 stripNo:  .res 1
+
+; sprite positions
+player_x: .res 1
+player_y: .res 1
+enemy_x:  .res 1
+enemy_y:  .res 1
+coin_x:   .res 1
+coin_y:   .res 1
+.exportzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y
+
+; sprite animations
+tileIndex:   .res 1
+sprite_attr: .res 1
+player_dir:  .res 1
+baseLo:      .res 1
+baseHi:      .res 1
+nmi_counter: .res 1
+.exportzp tileIndex, sprite_attr, player_dir, baseLo, baseHi, nmi_counter
 
 .segment "CODE"
 .proc irq_handler
   RTI
 .endproc
+
+.import write_sprite, update_sprite
 
 .proc nmi_handler
   LDA #$00
@@ -18,6 +40,65 @@ stripNo:  .res 1
   LDA #$00
   STA PPUSCROLL
   STA PPUSCROLL
+
+  ; where to start writing sprites
+  LDA #$02
+  STA baseHi
+  LDA #$00
+  STA baseLo
+
+  ; update sprite positions
+  JSR update_sprite
+
+  ; once sprite position is updated, check sprite direction and write sprite
+  LDA player_dir
+  CMP #$00
+  BEQ running_animation
+  CMP #$01
+  BEQ down_animation
+  CMP #$03
+  BEQ up_animation
+
+  running_animation:
+  LDA nmi_counter
+  AND #%00100000
+  BEQ running_frame1
+  running_frame2:
+  LDA #$01
+  JMP write
+  running_frame1:
+  LDA #$02
+  JMP write
+
+  down_animation:
+  LDA nmi_counter
+  AND #%00100000
+  BEQ down_frame1
+  down_frame2:
+  LDA #$05
+  JMP write
+  down_frame1:
+  LDA #$06
+  JMP write
+
+  up_animation:
+  LDA nmi_counter
+  AND #%00100000
+  BEQ up_frame1
+  up_frame2:
+  LDA #$03
+  JMP write
+  up_frame1:
+  LDA #$04
+  JMP write
+
+  write:
+  ASL A
+  ASL A
+  STA tileIndex
+  JSR write_sprite
+
+  INC nmi_counter
   RTI
 .endproc
 

@@ -40,11 +40,33 @@ if (-not (Test-Path $reset_path)) {
   Write-Host "Finished assembling $reset_path"
 }
 
+# Assemble the draw file (i.e., src\draw.asm)
+$draw_path = "$dir\src\draw.asm"
+if (-not (Test-Path $draw_path)) {
+  Write-Host "ERROR: Draw file was not found at: $draw_path"
+  exit 1
+} else {
+  & $ca65_path -I "include" -o "$dir\draw.o" $draw_path
+  Write-Host "Finished assembling $draw_path"
+}
+
+# Assemble the update file (i.e., src\update.asm)
+$update_path = "$dir\src\update.asm"
+if (-not (Test-Path $update_path)) {
+  Write-Host "ERROR: Update file was not found at: $update_path"
+  exit 1
+} else {
+  & $ca65_path -I "include" -o "$dir\update.o" $update_path
+  Write-Host "Finished assembling $update_path"
+}
+
 # Link object files and create .nes file
-& $ld65_path -C nes.cfg -o "$dir\$project_name.nes" "$dir\main.o" "$dir\reset.o"
+& $ld65_path -C nes.cfg -o "$dir\$project_name.nes" "$dir\main.o" "$dir\reset.o" "$dir\draw.o" "$dir\update.o"
 Write-Host "Finished linking files, and producing .nes file"
 
 # Delete object files
 Remove-Item "$dir\main.o"
 Remove-Item "$dir\reset.o"
+Remove-Item "$dir\draw.o"
+Remove-Item "$dir\update.o"
 Write-Host "Done"

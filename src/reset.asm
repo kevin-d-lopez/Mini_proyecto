@@ -1,5 +1,8 @@
 .include "constants.inc"
 
+.segment "ZEROPAGE"
+.importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y, sprite_attr, player_dir, nmi_counter
+
 .segment "CODE"
 .import main
 .export reset_handler
@@ -28,6 +31,28 @@ clear_oam:
 	INX
 	INX
 	BNE clear_oam
+
+  ; initialize zero-page variables
+  LDA #STARTPOS_PLAYER_X
+  STA player_x
+  LDA #STARTPOS_PLAYER_Y
+  STA player_y
+
+  LDA #STARTPOS_ENEMY_X
+  STA enemy_x
+  LDA #STARTPOS_ENEMY_Y
+  STA enemy_y
+
+  LDA #STARTPOS_COIN_X
+  STA coin_x
+  LDA #STARTPOS_COIN_Y
+  STA coin_y
+
+  ; initialize player attributes, initial direction, and nmi counter to $00
+  LDA #$00
+  STA sprite_attr
+  STA player_dir
+  STA nmi_counter
 
 vblankwait2:
   BIT $2002
