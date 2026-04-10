@@ -23,7 +23,8 @@ player_dir:  .res 1
 baseLo:      .res 1
 baseHi:      .res 1
 nmi_counter: .res 1
-.exportzp tileIndex, sprite_attr, player_dir, baseLo, baseHi, nmi_counter
+timer:       .res 1
+.exportzp tileIndex, sprite_attr, player_dir, baseLo, baseHi, nmi_counter, timer
 
 ; player parameters
 player_spe:  .res 1
@@ -38,7 +39,7 @@ controller1: .res 1
   RTI
 .endproc
 
-.import write_sprite, update_sprite, read_controller1
+.import read_controller1, update_sprite, draw_sprite
 
 .proc nmi_handler
   LDA #$00
@@ -60,54 +61,10 @@ controller1: .res 1
   JSR update_sprite
 
   ; once sprite position is updated, check sprite direction and write sprite
-  LDA player_dir
-  CMP #$00
-  BEQ running_animation
-  CMP #$01
-  BEQ down_animation
-  CMP #$03
-  BEQ up_animation
-
-  running_animation:
-  LDA nmi_counter
-  AND #%00100000
-  BEQ running_frame1
-  running_frame2:
-  LDA #$01
-  JMP write
-  running_frame1:
-  LDA #$02
-  JMP write
-
-  down_animation:
-  LDA nmi_counter
-  AND #%00100000
-  BEQ down_frame1
-  down_frame2:
-  LDA #$05
-  JMP write
-  down_frame1:
-  LDA #$06
-  JMP write
-
-  up_animation:
-  LDA nmi_counter
-  AND #%00100000
-  BEQ up_frame1
-  up_frame2:
-  LDA #$03
-  JMP write
-  up_frame1:
-  LDA #$04
-  JMP write
-
-  write:
-  ASL A
-  ASL A
-  STA tileIndex
-  JSR write_sprite
+  JSR draw_sprite
 
   INC nmi_counter
+  INC timer
   RTI
 .endproc
 

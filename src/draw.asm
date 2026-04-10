@@ -3,9 +3,68 @@
 .segment "ZEROPAGE"
 .importzp tileIndex, sprite_attr, player_dir, baseLo, baseHi
 .importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y
+.importzp timer
 
 .segment "CODE"
-.export write_sprite
+.export draw_sprite
+
+.proc draw_sprite
+  PHA
+  TXA
+  PHA
+
+  LDA player_dir
+  CMP #$00
+  BEQ running_animation
+  CMP #$01
+  BEQ down_animation
+  CMP #$03
+  BEQ up_animation
+
+  running_animation:
+  LDA timer
+  AND #%00100000
+  BEQ running_frame1
+  running_frame2:
+  LDA #$01
+  JMP write
+  running_frame1:
+  LDA #$02
+  JMP write
+
+  down_animation:
+  LDA timer
+  AND #%00100000
+  BEQ down_frame1
+  down_frame2:
+  LDA #$05
+  JMP write
+  down_frame1:
+  LDA #$06
+  JMP write
+
+  up_animation:
+  LDA timer
+  AND #%00100000
+  BEQ up_frame1
+  up_frame2:
+  LDA #$03
+  JMP write
+  up_frame1:
+  LDA #$04
+  JMP write
+
+  write:
+  ASL A
+  ASL A
+  STA tileIndex
+  JSR write_sprite
+
+  PLA
+  TAX
+  PLA
+  RTS
+.endproc
 
 ; subroutine receives the screen coordinates for a sprite through the `player_x`
 ; and `player_y`, and the index where the sprite starts from its sprite table
