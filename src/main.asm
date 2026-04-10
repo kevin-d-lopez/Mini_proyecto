@@ -590,4 +590,4 @@ metatile_sets:
 .include "bomb_bg.asm"
 
 .segment "CHR"
-  .incbin "../maps.chr"
+.incbin "include/maps.chr"
