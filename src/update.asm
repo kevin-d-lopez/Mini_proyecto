@@ -6,7 +6,7 @@
 .importzp controller1
 
 .segment "CODE"
-.export update_sprite
+.export update_player
 
 .proc update_player_dir
   LDA controller1  ; load button presses
@@ -44,7 +44,7 @@
   RTS
 .endproc
 
-.proc update_sprite
+.proc update_player
   PHA
   TXA
   PHA

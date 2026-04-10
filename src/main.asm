@@ -16,16 +16,6 @@ coin_x:   .res 1
 coin_y:   .res 1
 .exportzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y
 
-; sprite animations
-tileIndex:   .res 1
-sprite_attr: .res 1
-player_dir:  .res 1
-baseLo:      .res 1
-baseHi:      .res 1
-nmi_counter: .res 1
-timer:       .res 1
-.exportzp tileIndex, sprite_attr, player_dir, baseLo, baseHi, nmi_counter, timer
-
 ; player parameters
 player_spe:  .res 1
 .exportzp player_spe
@@ -39,32 +29,27 @@ controller1: .res 1
   RTI
 .endproc
 
-.import read_controller1, update_sprite, draw_sprite
+.import read_controller1, update_player, draw_player
 
 .proc nmi_handler
+  ; copy the memory from $0200-$02ff into OAM
   LDA #$00
-  STA OAMADDR
+  STA OAMADDR    ; prepare the PPU for a transfer to OAM starting at byte $00
   LDA #$02
-  STA OAMDMA
+  STA OAMDMA     ; initiate transfer of the 256 bytes from $0200-$02ff into OAM
+
+  ; set PPUSCROLL x-position and y-position to #$00
   LDA #$00
   STA PPUSCROLL
   STA PPUSCROLL
 
-  ; where to start writing sprites
-  LDA #$02
-  STA baseHi
-  LDA #$00
-  STA baseLo
-
-  ; update sprite positions
+  ; read controller input and update player position
   JSR read_controller1
-  JSR update_sprite
+  JSR update_player
 
-  ; once sprite position is updated, check sprite direction and write sprite
-  JSR draw_sprite
+  ; once player position is updated, draw the player
+  JSR draw_player
 
-  INC nmi_counter
-  INC timer
   RTI
 .endproc
 

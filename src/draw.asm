@@ -1,14 +1,20 @@
 .include "constants.inc"
 
 .segment "ZEROPAGE"
-.importzp tileIndex, sprite_attr, player_dir, baseLo, baseHi
 .importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y
-.importzp timer
+
+baseLo:      .res 1
+baseHi:      .res 1
+timer:       .res 1
+tileIndex:   .res 1
+sprite_attr: .res 1
+player_dir:  .res 1
+.exportzp baseLo, baseHi, timer, tileIndex, sprite_attr, player_dir
 
 .segment "CODE"
-.export draw_sprite
+.export draw_player
 
-.proc draw_sprite
+.proc draw_player
   PHA
   TXA
   PHA
@@ -59,6 +65,8 @@
   ASL A
   STA tileIndex
   JSR write_sprite
+
+  INC timer
 
   PLA
   TAX

@@ -1,7 +1,11 @@
 .include "constants.inc"
 
 .segment "ZEROPAGE"
-.importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y, sprite_attr, player_dir, nmi_counter, player_spe
+; zeropage variables from main.asm
+.importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y, player_spe
+
+; zeropage variables from draw.asm
+.importzp baseLo, baseHi, timer, sprite_attr, player_dir
 
 .segment "CODE"
 .import main
@@ -51,11 +55,17 @@ clear_oam:
   LDA #INITIAL_PLAYER_SPE
   STA player_spe
 
-  ; initialize player attributes, initial direction, and nmi counter to $00
+  ; initialize player attributes, initial direction, and a timer to $00
   LDA #$00
   STA sprite_attr
   STA player_dir
-  STA nmi_counter
+  STA timer
+
+  ; where to start writing sprites
+  LDA #$02
+  STA baseHi
+  LDA #$00
+  STA baseLo
 
 vblankwait2:
   BIT $2002
