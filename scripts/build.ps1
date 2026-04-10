@@ -9,11 +9,11 @@ $ld65_path = "ld65"
 
 # If ca65 is NOT in the system PATH, uncomment the line below and modify the
 # path to the ca65 binary accordingly.
-# $ca65_path = (Resolve-Path (Join-Path (Get-Location) "..\..\..\cc65-snapshot-win64\bin\ca65.exe")).Path
+$ca65_path = (Resolve-Path (Join-Path (Get-Location) "..\..\..\cc65-snapshot-win64\bin\ca65.exe")).Path
 
 # If ld65 is NOT in the system PATH, uncomment the line below and modify the
 # path to the ld65 binary accordingly.
-# $ld65_path = (Resolve-Path (Join-Path (Get-Location) "..\..\..\cc65-snapshot-win64\bin\ld65.exe")).Path
+$ld65_path = (Resolve-Path (Join-Path (Get-Location) "..\..\..\cc65-snapshot-win64\bin\ld65.exe")).Path
 
 ### Start Script ###
 
@@ -60,8 +60,18 @@ if (-not (Test-Path $update_path)) {
   Write-Host "Finished assembling $update_path"
 }
 
+# Assemble the controllers file (i.e., src\controllers.asm)
+$controllers_path = "$dir\src\controllers.asm"
+if (-not (Test-Path $controllers_path)) {
+  Write-Host "ERROR: Controllers file was not found at: $controllers_path"
+  exit 1
+} else {
+  & $ca65_path -I "include" -o "$dir\controllers.o" $controllers_path
+  Write-Host "Finished assembling $controllers_path"
+}
+
 # Link object files and create .nes file
-& $ld65_path -C nes.cfg -o "$dir\$project_name.nes" "$dir\main.o" "$dir\reset.o" "$dir\draw.o" "$dir\update.o"
+& $ld65_path -C nes.cfg -o "$dir\$project_name.nes" "$dir\main.o" "$dir\reset.o" "$dir\draw.o" "$dir\update.o" "$dir\controllers.o"
 Write-Host "Finished linking files, and producing .nes file"
 
 # Delete object files
@@ -69,4 +79,5 @@ Remove-Item "$dir\main.o"
 Remove-Item "$dir\reset.o"
 Remove-Item "$dir\draw.o"
 Remove-Item "$dir\update.o"
+Remove-Item "$dir\controllers.o"
 Write-Host "Done"

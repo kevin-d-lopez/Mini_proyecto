@@ -3,14 +3,53 @@
 .segment "ZEROPAGE"
 .importzp player_dir
 .importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y
+.importzp controller1
 
 .segment "CODE"
-.export update_sprite
+.export update_player_dir, update_sprite
+
+.proc update_player_dir
+  LDA controller1  ; load button presses
+  AND #BTN_LEFT    ; filter out all but left button
+  BEQ check_right  ; if result is zero, left not pressed
+  ; if the branch above is not taken, set player direction left
+  LDA #$02
+  STA player_dir
+
+  check_right:
+  LDA controller1
+  AND #BTN_RIGHT
+  BEQ check_up
+  ; if the branch above is not taken, set player direction right
+  LDA #$00
+  STA player_dir
+
+  check_up:
+  LDA controller1
+  AND #BTN_UP
+  BEQ check_down
+  ; if the branch above is not taken, set player direction up
+  LDA #$03
+  STA player_dir
+
+  check_down:
+  LDA controller1
+  AND #BTN_DOWN
+  BEQ done_checking
+  ; if the branch above is not taken, set player direction down
+  LDA #$01
+  STA player_dir
+
+  done_checking:
+  RTS
+.endproc
 
 .proc update_sprite
   PHA
   TXA
   PHA
+
+  JSR update_player_dir
 
   LDA player_dir
   CMP #$00
@@ -22,56 +61,21 @@
   CMP #$03
   BEQ move_up
 
-  ; increment x position until x = 152
   move_right:
-  LDA player_x
-  CMP #152
-  BEQ set_down
   INC player_x
   JMP end_move_sprite
 
-  set_down:
-  LDA #$01
-  STA player_dir
-  JMP end_move_sprite
-
-  ; once x = 152 is reched, increment y until y = 136
   move_down:
-  LDA player_y
-  CMP #136
-  BEQ set_left
   INC player_y
   JMP end_move_sprite
 
-  set_left:
-  LDA #$02
-  STA player_dir
-  JMP end_move_sprite
-
-  ; once x = 152 and y = 136, decrement x until x = 80
   move_left:
-  LDA player_x
-  CMP #80
-  BEQ set_up
   DEC player_x
   JMP end_move_sprite
 
-  set_up:
-  LDA #$03
-  STA player_dir
-  JMP end_move_sprite
-
-  ; once x = 80, decrement y until y = 88
   move_up:
-  LDA player_y
-  CMP #88
-  BEQ set_right
   DEC player_y
   JMP end_move_sprite
-
-  set_right:
-  LDA #$00
-  STA player_dir
 
   end_move_sprite:
   PLA

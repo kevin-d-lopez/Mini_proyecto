@@ -66,8 +66,19 @@ else
   echo "Finished assembling $update_path"
 fi
 
+# Assemble the controllers file (i.e., src/controllers.asm)
+controllers_path="src/controllers.asm"
+if ! [[ -f "$controllers_path" ]]
+then
+  echo "ERROR: Controllers file was not found at: $controllers_path"
+  exit 1
+else
+  "$ca65_path" -I "include" -o "$dir/controllers.o" $controllers_path
+  echo "Finished assembling $controllers_path"
+fi
+
 # Link object files and create .nes file
-"$ld65_path" -C nes.cfg -o "$dir/$project_name.nes" "$dir/main.o" "$dir/reset.o" "$dir/draw.o" "$dir/update.o" 
+"$ld65_path" -C nes.cfg -o "$dir/$project_name.nes" "$dir/main.o" "$dir/reset.o" "$dir/draw.o" "$dir/update.o" "$dir/controllers.o" 
 echo "Finished linking files, and producing .nes file"
 
 # Delete object files
@@ -75,4 +86,5 @@ rm "$dir/main.o"
 rm "$dir/reset.o"
 rm "$dir/draw.o"
 rm "$dir/update.o"
+rm "$dir/controllers.o"
 echo "Done"

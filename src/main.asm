@@ -25,12 +25,16 @@ baseHi:      .res 1
 nmi_counter: .res 1
 .exportzp tileIndex, sprite_attr, player_dir, baseLo, baseHi, nmi_counter
 
+; controller
+controller1: .res 1
+.exportzp controller1
+
 .segment "CODE"
 .proc irq_handler
   RTI
 .endproc
 
-.import write_sprite, update_sprite
+.import write_sprite, update_sprite, read_controller1
 
 .proc nmi_handler
   LDA #$00
@@ -48,6 +52,7 @@ nmi_counter: .res 1
   STA baseLo
 
   ; update sprite positions
+  JSR read_controller1
   JSR update_sprite
 
   ; once sprite position is updated, check sprite direction and write sprite
@@ -228,7 +233,7 @@ nmi_counter: .res 1
     CPX #$40
     BNE write_attributes
 
-vblankwait:       ; wait for another vblank before continuing
+  vblankwait:       ; wait for another vblank before continuing
   BIT PPUSTATUS
   BPL vblankwait
 
@@ -237,8 +242,8 @@ vblankwait:       ; wait for another vblank before continuing
   LDA #%00011110  ; turn on screen
   STA PPUMASK
 
-forever:
-  JMP forever
+  forever:
+    JMP forever
 .endproc
 
 .proc write_megatile
