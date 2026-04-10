@@ -9,11 +9,11 @@ $ld65_path = "ld65"
 
 # If ca65 is NOT in the system PATH, uncomment the line below and modify the
 # path to the ca65 binary accordingly.
-$ca65_path = (Resolve-Path (Join-Path (Get-Location) "..\..\..\cc65-snapshot-win64\bin\ca65.exe")).Path
+# $ca65_path = (Resolve-Path (Join-Path (Get-Location) "..\..\..\cc65-snapshot-win64\bin\ca65.exe")).Path
 
 # If ld65 is NOT in the system PATH, uncomment the line below and modify the
 # path to the ld65 binary accordingly.
-$ld65_path = (Resolve-Path (Join-Path (Get-Location) "..\..\..\cc65-snapshot-win64\bin\ld65.exe")).Path
+# $ld65_path = (Resolve-Path (Join-Path (Get-Location) "..\..\..\cc65-snapshot-win64\bin\ld65.exe")).Path
 
 ### Start Script ###
 
