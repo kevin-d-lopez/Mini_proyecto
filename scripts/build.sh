@@ -20,7 +20,7 @@ ld65_path="ld65"
 ### Start Script ###
 
 # Get the working directory path
-dir=$(dirname "$(dirname "$(realpath "$n")")")
+dir="$PWD"
 
 # Assemble the main file (i.e., src/main.asm)
 main_path="src/main.asm"
