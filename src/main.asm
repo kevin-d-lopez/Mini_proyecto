@@ -25,6 +25,10 @@ baseHi:      .res 1
 nmi_counter: .res 1
 .exportzp tileIndex, sprite_attr, player_dir, baseLo, baseHi, nmi_counter
 
+; player parameters
+player_spe:  .res 1
+.exportzp player_spe
+
 ; controller
 controller1: .res 1
 .exportzp controller1

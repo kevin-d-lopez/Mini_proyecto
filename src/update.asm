@@ -1,12 +1,12 @@
 .include "constants.inc"
 
 .segment "ZEROPAGE"
-.importzp player_dir
+.importzp player_dir, player_spe
 .importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y
 .importzp controller1
 
 .segment "CODE"
-.export update_player_dir, update_sprite
+.export update_sprite
 
 .proc update_player_dir
   LDA controller1  ; load button presses
@@ -62,19 +62,31 @@
   BEQ move_up
 
   move_right:
-  INC player_x
+  LDA player_x
+  CLC
+  ADC player_spe
+  STA player_x
   JMP end_move_sprite
 
   move_down:
-  INC player_y
+  LDA player_y
+  CLC
+  ADC player_spe
+  STA player_y
   JMP end_move_sprite
 
   move_left:
-  DEC player_x
+  LDA player_x
+  SEC
+  SBC player_spe
+  STA player_x
   JMP end_move_sprite
 
   move_up:
-  DEC player_y
+  LDA player_y
+  SEC
+  SBC player_spe
+  STA player_y
   JMP end_move_sprite
 
   end_move_sprite:

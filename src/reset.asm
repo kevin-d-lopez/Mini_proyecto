@@ -1,7 +1,7 @@
 .include "constants.inc"
 
 .segment "ZEROPAGE"
-.importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y, sprite_attr, player_dir, nmi_counter
+.importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y, sprite_attr, player_dir, nmi_counter, player_spe
 
 .segment "CODE"
 .import main
@@ -47,6 +47,9 @@ clear_oam:
   STA coin_x
   LDA #INITIAL_COIN_Y
   STA coin_y
+
+  LDA #INITIAL_PLAYER_SPE
+  STA player_spe
 
   ; initialize player attributes, initial direction, and nmi counter to $00
   LDA #$00
