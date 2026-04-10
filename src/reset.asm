@@ -33,19 +33,19 @@ clear_oam:
 	BNE clear_oam
 
   ; initialize zero-page variables
-  LDA #STARTPOS_PLAYER_X
+  LDA #INITIAL_PLAYER_X
   STA player_x
-  LDA #STARTPOS_PLAYER_Y
+  LDA #INITIAL_PLAYER_Y
   STA player_y
 
-  LDA #STARTPOS_ENEMY_X
+  LDA #INITIAL_ENEMY_X
   STA enemy_x
-  LDA #STARTPOS_ENEMY_Y
+  LDA #INITIAL_ENEMY_Y
   STA enemy_y
 
-  LDA #STARTPOS_COIN_X
+  LDA #INITIAL_COIN_X
   STA coin_x
-  LDA #STARTPOS_COIN_Y
+  LDA #INITIAL_COIN_Y
   STA coin_y
 
   ; initialize player attributes, initial direction, and nmi counter to $00
