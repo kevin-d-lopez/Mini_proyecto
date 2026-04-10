@@ -4,7 +4,7 @@
 # Usage: ./scripts/build.sh 
 
 ### Script Configuration ###
-project_name="CoinRunner"
+project_name="CoinCollector"
 
 ca65_path="ca65"
 ld65_path="ld65"

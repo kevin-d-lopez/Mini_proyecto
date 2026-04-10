@@ -1,4 +1,4 @@
-# Mini Proyecto: Coin Runner
+# Mini Proyecto: Coin Collector
 
 ## Assembling and Linking Instructions
 Utilities for building the project are included under the `**/scripts**` folder.

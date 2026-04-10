@@ -3,3 +3,6 @@
 
 # Ignore DS_Store files (MacOS).
 **/.DS_Store
+
+# Ignore Python venv
+.venv/

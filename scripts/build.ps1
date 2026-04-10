@@ -2,7 +2,7 @@
 # Usage: powershell -ExecutionPolicy Bypass -File scripts\build.ps1 
 
 ### Script Configuration ###
-$project_name = "CoinRunner"
+$project_name = "CoinCollector"
 
 $ca65_path = "ca65"
 $ld65_path = "ld65"
