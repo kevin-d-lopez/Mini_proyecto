@@ -1,0 +1,5 @@
+# Ignore all object files.
+*.o
+
+# Ignore DS_Store files (MacOS).
+**/.DS_Store
