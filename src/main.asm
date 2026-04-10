@@ -240,16 +240,16 @@ forever:
 .segment "RODATA"
 palettes:
   ; background
-  .byte $2a, $2d, $3d, $20
-  .byte $2a, $1a, $18, $28
-  .byte $2a, $16, $27, $37
-  .byte $2a, $02, $21, $31
+  .byte $2B, $0F, $00, $10
+  .byte $2B, $20, $2D, $28
+  .byte $2B, $0B, $1A, $29
+  .byte $2B, $00, $00, $00
 
   ; sprites
-  .byte $2a, $22, $00, $00
-  .byte $2a, $11, $00, $00
-  .byte $2a, $27, $00, $00
-  .byte $2a, $2c, $00, $00
+  .byte $2B, $0F, $10, $3C
+  .byte $2B, $03, $14, $24
+  .byte $2B, $0F, $38, $28
+  .byte $2B, $0F, $16, $26
 
 metatiles:
   .byte $10, $11, $20, $21  ; wall1
