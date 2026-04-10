@@ -1,18 +1,17 @@
 .include "constants.inc"
 
 .segment "ZEROPAGE"
-.importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y
+.importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y, timer
 
 baseLo:      .res 1
 baseHi:      .res 1
-timer:       .res 1
 tileIndex:   .res 1
 sprite_attr: .res 1
 player_dir:  .res 1
-.exportzp baseLo, baseHi, timer, tileIndex, sprite_attr, player_dir
+.exportzp baseLo, baseHi, tileIndex, sprite_attr, player_dir
 
 .segment "CODE"
-.export draw_player
+.export draw_player, draw_enemy, draw_coin
 
 .proc draw_player
   PHA
@@ -64,9 +63,63 @@ player_dir:  .res 1
   ASL A
   ASL A
   STA tileIndex
-  JSR write_sprite
+  JSR write_player_sprite
 
-  INC timer
+  PLA
+  TAX
+  PLA
+  RTS
+.endproc
+
+.proc draw_enemy
+  PHA
+  TXA
+  PHA
+
+  flying_animation:
+  LDA timer
+  AND #%00100000
+  BEQ flying_frame1
+  flying_frame2:
+  LDA #$01
+  JMP write
+  flying_frame1:
+  LDA #$02
+  JMP write
+
+  write:
+  ASL A
+  ASL A
+  STA tileIndex
+  JSR write_enemy_sprite
+
+  PLA
+  TAX
+  PLA
+  RTS
+.endproc
+
+.proc draw_coin
+  PHA
+  TXA
+  PHA
+
+  observing_animation:
+  LDA timer
+  AND #%00100000
+  BEQ observing_frame1
+  observing_frame2:
+  LDA #$01
+  JMP write
+  observing_frame1:
+  LDA #$02
+  JMP write
+
+  write:
+  ASL A
+  ASL A
+  STA tileIndex
+  JSR write_coin_sprite
 
   PLA
   TAX
@@ -77,10 +130,13 @@ player_dir:  .res 1
 ; subroutine receives the screen coordinates for a sprite through the `player_x`
 ; and `player_y`, and the index where the sprite starts from its sprite table
 ; through `tileIndex`. 
-.proc write_sprite
+.proc write_player_sprite
   PHA
   TXA
   PHA
+
+  LDA #$00
+  STA baseLo
 
   start_writing_sprites:
   LDX tileIndex
@@ -185,15 +241,262 @@ player_dir:  .res 1
   BEQ bottom_left
 
   end_writing_sprites:
-  ; ; keep baseLo updated for future writes
-  ; LDA baseLo
-  ; CLC
-  ; ADC #$10
-  ; STA baseLo
-
   ; reset sprite attributes to $00
   LDA #$00
-  STA sprite_attr 
+  STA sprite_attr
+  STA baseLo
+
+  PLA
+  TAX
+  PLA
+  RTS
+.endproc
+
+; subroutine receives the screen coordinates for a sprite through the `enemy_x`
+; and `enemy_y`, and the index where the sprite starts from its sprite table
+; through `tileIndex`.
+.proc write_enemy_sprite
+  PHA
+  TXA
+  PHA
+
+  LDA #$10
+  STA baseLo
+
+  start_writing_sprites:
+  LDX tileIndex
+  LDY #$00
+
+  ; if player is at the sprite's left side, flip sprites horizontally and alter
+  ; the write sequence of the sprites so that enemy is always looking at the
+  ; player
+  LDA player_x
+  CMP enemy_x
+  BCS top_left
+  LDA #%01000000
+  STA sprite_attr
+  JMP top_right
+
+  ; write top-left tile of sprite
+  top_left:
+  LDA enemy_y
+  STA (baseLo),Y ; Y-coord
+  INY
+  LDA enemy_sprites,X
+  STA (baseLo),Y ; tile number
+  INY
+  LDA #%00000000
+  ORA sprite_attr
+  STA (baseLo),Y ; attributes
+  INY
+  LDA enemy_x
+  STA (baseLo),Y ; X-coord
+  INY
+  INX
+  LDA player_x
+  CMP enemy_x
+  BCC bottom_right
+
+  ; write top-right tile of sprite (must add 8 to the sprite's x position)
+  top_right:
+  LDA enemy_y
+  STA (baseLo),Y ; Y-coord
+  INY
+  LDA enemy_sprites,X
+  STA (baseLo),Y ; tile number
+  INY
+  LDA #%00000000
+  ORA sprite_attr
+  STA (baseLo),Y ; attributes
+  INY
+  LDA enemy_x
+  CLC
+  ADC #$08
+  STA (baseLo),Y ; X-coord
+  INY
+  INX
+  LDA player_x
+  CMP enemy_x
+  BCC top_left
+
+  ; write bottom-left tile of sprite (must add 8 to the sprite's y position)
+  bottom_left:
+  LDA enemy_y
+  CLC
+  ADC #$08
+  STA (baseLo),Y ; Y-coord
+  INY
+  LDA enemy_sprites,X
+  STA (baseLo),Y ; tile number
+  INY
+  LDA #%00000000
+  ORA sprite_attr
+  STA (baseLo),Y ; attributes
+  INY
+  LDA enemy_x
+  STA (baseLo),Y ; X-coord
+  INY
+  INX
+  LDA player_x
+  CMP enemy_x
+  BCC end_writing_sprites
+
+  ; write bottom-right tile of sprite (must add 8 to the sprite's x position and
+  ; y position)
+  bottom_right:
+  LDA enemy_y
+  CLC
+  ADC #$08
+  STA (baseLo),Y ; Y-coord
+  INY
+  LDA enemy_sprites,X
+  STA (baseLo),Y ; tile number
+  INY
+  LDA #%00000000
+  ORA sprite_attr
+  STA (baseLo),Y ; attributes
+  INY
+  LDA enemy_x
+  CLC
+  ADC #$08
+  STA (baseLo),Y ; X-coord
+  INY
+  INX
+  LDA player_x
+  CMP enemy_x
+  BCC bottom_left
+
+  end_writing_sprites:
+  ; reset sprite attributes to $00
+  LDA #$00
+  STA sprite_attr
+  STA baseLo
+
+  PLA
+  TAX
+  PLA
+  RTS
+.endproc
+
+; subroutine receives the screen coordinates for a sprite through the `coin_x`
+; and `coin_y`, and the index where the sprite starts from its sprite table
+; through `tileIndex`. 
+.proc write_coin_sprite
+  PHA
+  TXA
+  PHA
+
+  LDA #$20
+  STA baseLo
+
+  start_writing_sprites:
+  LDX tileIndex
+  LDY #$00
+
+  ; if player is at the sprite's right side, flip sprites horizontally and alte
+  ; the write sequence of the sprites so that coin is always looking at the
+  ; player
+  LDA player_x
+  CMP coin_x
+  BCC top_left
+  LDA #%01000000
+  STA sprite_attr
+  JMP top_right
+
+  ; write top-left tile of sprite
+  top_left:
+  LDA coin_y
+  STA (baseLo),Y ; Y-coord
+  INY
+  LDA coin_sprites,X
+  STA (baseLo),Y ; tile number
+  INY
+  LDA #%00000000
+  ORA sprite_attr
+  STA (baseLo),Y ; attributes
+  INY
+  LDA coin_x
+  STA (baseLo),Y ; X-coord
+  INY
+  INX
+  LDA player_x
+  CMP coin_x
+  BCS bottom_right
+
+  ; write top-right tile of sprite (must add 8 to the sprite's x position)
+  top_right:
+  LDA coin_y
+  STA (baseLo),Y ; Y-coord
+  INY
+  LDA coin_sprites,X
+  STA (baseLo),Y ; tile number
+  INY
+  LDA #%00000000
+  ORA sprite_attr
+  STA (baseLo),Y ; attributes
+  INY
+  LDA coin_x
+  CLC
+  ADC #$08
+  STA (baseLo),Y ; X-coord
+  INY
+  INX
+  LDA player_x
+  CMP coin_x
+  BCS top_left
+
+  ; write bottom-left tile of sprite (must add 8 to the sprite's y position)
+  bottom_left:
+  LDA coin_y
+  CLC
+  ADC #$08
+  STA (baseLo),Y ; Y-coord
+  INY
+  LDA coin_sprites,X
+  STA (baseLo),Y ; tile number
+  INY
+  LDA #%00000000
+  ORA sprite_attr
+  STA (baseLo),Y ; attributes
+  INY
+  LDA coin_x
+  STA (baseLo),Y ; X-coord
+  INY
+  INX
+  LDA player_x
+  CMP coin_x
+  BCS end_writing_sprites
+
+  ; write bottom-right tile of sprite (must add 8 to the sprite's x position and
+  ; y position)
+  bottom_right:
+  LDA coin_y
+  CLC
+  ADC #$08
+  STA (baseLo),Y ; Y-coord
+  INY
+  LDA coin_sprites,X
+  STA (baseLo),Y ; tile number
+  INY
+  LDA #%00000000
+  ORA sprite_attr
+  STA (baseLo),Y ; attributes
+  INY
+  LDA coin_x
+  CLC
+  ADC #$08
+  STA (baseLo),Y ; X-coord
+  INY
+  INX
+  LDA player_x
+  CMP coin_x
+  BCS bottom_left
+
+  end_writing_sprites:
+  ; reset sprite attributes to $00
+  LDA #$00
+  STA sprite_attr
+  STA baseLo
 
   PLA
   TAX

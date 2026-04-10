@@ -24,12 +24,15 @@ player_spe:  .res 1
 controller1: .res 1
 .exportzp controller1
 
+timer: .res 1
+.exportzp timer
+
 .segment "CODE"
 .proc irq_handler
   RTI
 .endproc
 
-.import read_controller1, update_player, draw_player
+.import read_controller1, update_player, draw_player, draw_enemy, draw_coin
 
 .proc nmi_handler
   ; copy the memory from $0200-$02ff into OAM
@@ -49,7 +52,10 @@ controller1: .res 1
 
   ; once player position is updated, draw the player
   JSR draw_player
+  JSR draw_enemy
+  JSR draw_coin
 
+  INC timer
   RTI
 .endproc
 
