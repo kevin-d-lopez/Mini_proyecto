@@ -28,4 +28,5 @@ INITIAL_COIN_X   = $20
 INITIAL_COIN_Y   = $C0
 
 ; player initial parameters
-INITIAL_PLAYER_SPE = $01
+INITIAL_PLAYER_SPE = $02
+INITIAL_ENEMY_SPE  = $01

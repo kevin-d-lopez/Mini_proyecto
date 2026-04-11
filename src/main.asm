@@ -18,14 +18,16 @@ coin_y:   .res 1
 
 ; player parameters
 player_spe:  .res 1
-.exportzp player_spe
+enemy_spe:   .res 1
+.exportzp player_spe, enemy_spe
 
 ; controller
 controller1: .res 1
 .exportzp controller1
 
-timer: .res 1
-.exportzp timer
+timer:       .res 1
+nmi_counter: .res 1
+.exportzp timer, nmi_counter
 
 .segment "CODE"
 .proc irq_handler
@@ -46,15 +48,20 @@ timer: .res 1
   STA PPUSCROLL
   STA PPUSCROLL
 
-  ; read controller input and update player position
+  ; read controller input and update player position every 4 nmi frames
+  LDA nmi_counter
+  AND #$03
+  BNE draw
   JSR read_controller1
   JSR update_player
 
+  draw:
   ; once player position is updated, draw the player
   JSR draw_player
   JSR draw_enemy
   JSR draw_coin
 
+  INC nmi_counter
   INC timer
   RTI
 .endproc

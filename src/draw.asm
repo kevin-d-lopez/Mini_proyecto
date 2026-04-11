@@ -28,7 +28,7 @@ player_dir:  .res 1
 
   running_animation:
   LDA timer
-  AND #%00100000
+  AND #%00010000
   BEQ running_frame1
   running_frame2:
   LDA #$01
@@ -39,7 +39,7 @@ player_dir:  .res 1
 
   down_animation:
   LDA timer
-  AND #%00100000
+  AND #%00010000
   BEQ down_frame1
   down_frame2:
   LDA #$05
@@ -50,7 +50,7 @@ player_dir:  .res 1
 
   up_animation:
   LDA timer
-  AND #%00100000
+  AND #%00010000
   BEQ up_frame1
   up_frame2:
   LDA #$03
@@ -78,7 +78,7 @@ player_dir:  .res 1
 
   flying_animation:
   LDA timer
-  AND #%00100000
+  AND #%00010000
   BEQ flying_frame1
   flying_frame2:
   LDA #$01
@@ -263,6 +263,9 @@ player_dir:  .res 1
   LDA #$10
   STA baseLo
 
+  LDA #%00000001
+  STA sprite_attr
+
   start_writing_sprites:
   LDX tileIndex
   LDY #$00
@@ -273,7 +276,7 @@ player_dir:  .res 1
   LDA player_x
   CMP enemy_x
   BCS top_left
-  LDA #%01000000
+  LDA #%01000001
   STA sprite_attr
   JMP top_right
 
@@ -389,6 +392,9 @@ player_dir:  .res 1
   LDA #$20
   STA baseLo
 
+  LDA #%00000010
+  STA sprite_attr
+
   start_writing_sprites:
   LDX tileIndex
   LDY #$00
@@ -399,7 +405,7 @@ player_dir:  .res 1
   LDA player_x
   CMP coin_x
   BCC top_left
-  LDA #%01000000
+  LDA #%01000010
   STA sprite_attr
   JMP top_right
 
