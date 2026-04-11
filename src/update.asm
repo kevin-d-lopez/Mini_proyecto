@@ -6,7 +6,7 @@
 .importzp controller1
 
 .segment "CODE"
-.export update_player
+.export update_player, update_enemy
 
 .proc update_player_dir
   LDA controller1  ; load button presses
@@ -88,6 +88,42 @@
   SBC player_spe
   STA player_y
   JMP end_move_sprite
+
+  end_move_sprite:
+  PLA
+  TAX
+  PLA
+  RTS
+.endproc
+
+.proc update_enemy
+  PHA
+  TXA
+  PHA
+
+  LDA player_x
+  CMP enemy_x
+  BCS move_right
+
+  move_left:
+  DEC enemy_x
+  JMP end_move_x
+
+  move_right:
+  INC enemy_x
+  JMP end_move_x
+
+  end_move_x:
+  LDA player_y
+  CMP enemy_y
+  BCS move_down
+
+  move_up:
+  DEC enemy_y
+  JMP end_move_sprite
+
+  move_down:
+  INC enemy_y
 
   end_move_sprite:
   PLA

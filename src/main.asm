@@ -34,7 +34,9 @@ nmi_counter: .res 1
   RTI
 .endproc
 
-.import read_controller1, update_player, draw_player, draw_enemy, draw_coin
+.import read_controller1
+.import draw_player, draw_enemy, draw_coin
+.import update_player, update_enemy
 
 .proc nmi_handler
   ; copy the memory from $0200-$02ff into OAM
@@ -54,6 +56,7 @@ nmi_counter: .res 1
   BNE draw
   JSR read_controller1
   JSR update_player
+  JSR update_enemy
 
   draw:
   ; once player position is updated, draw the player
