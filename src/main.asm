@@ -2,24 +2,70 @@
 .include "header.inc"
 
 .segment "ZEROPAGE"
-baseHi:   .res 1
-baseLo:   .res 1
+
+; background generation
 megatile: .res 1
 stripNo:  .res 1
+
+; sprite positions
+player_x: .res 1
+player_y: .res 1
+enemy_x:  .res 1
+enemy_y:  .res 1
+coin_x:   .res 1
+coin_y:   .res 1
+.exportzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y
+
+; player parameters
+player_spe:  .res 1
+enemy_spe:   .res 1
+.exportzp player_spe, enemy_spe
+
+; controller
+controller1: .res 1
+.exportzp controller1
+
+timer:       .res 1
+nmi_counter: .res 1
+.exportzp timer, nmi_counter
 
 .segment "CODE"
 .proc irq_handler
   RTI
 .endproc
 
+.import read_controller1
+.import draw_player, draw_enemy, draw_coin
+.import update_player, update_enemy
+
 .proc nmi_handler
+  ; copy the memory from $0200-$02ff into OAM
   LDA #$00
-  STA OAMADDR
+  STA OAMADDR    ; prepare the PPU for a transfer to OAM starting at byte $00
   LDA #$02
-  STA OAMDMA
+  STA OAMDMA     ; initiate transfer of the 256 bytes from $0200-$02ff into OAM
+
+  ; set PPUSCROLL x-position and y-position to #$00
   LDA #$00
   STA PPUSCROLL
   STA PPUSCROLL
+
+  ; read controller input and update player position every 4 nmi frames
+  LDA nmi_counter
+  AND #$03
+  BNE draw
+  JSR read_controller1
+  JSR update_player
+  JSR update_enemy
+
+  draw:
+  ; once player position is updated, draw the player
+  JSR draw_player
+  JSR draw_enemy
+  JSR draw_coin
+
+  INC nmi_counter
+  INC timer
   RTI
 .endproc
 
@@ -135,27 +181,21 @@ stripNo:  .res 1
   ; where to start writing attribute table
   LDA PPUSTATUS
   LDX #$23
-  STX baseHi
+  STX PPUADDR
   LDX #$C0
-  STX baseLo
+  STX PPUADDR
 
   LDX #$00
   write_attributes:
-    LDA baseHi
-    STA PPUADDR
-    LDA baseLo
-    STA PPUADDR
-
     LDY attributes,X
     STY PPUDATA
     INX
-    INC baseLo
 
     ; end loop when counter reaches 64
     CPX #$40
     BNE write_attributes
 
-vblankwait:       ; wait for another vblank before continuing
+  vblankwait:       ; wait for another vblank before continuing
   BIT PPUSTATUS
   BPL vblankwait
 
@@ -164,8 +204,8 @@ vblankwait:       ; wait for another vblank before continuing
   LDA #%00011110  ; turn on screen
   STA PPUMASK
 
-forever:
-  JMP forever
+  forever:
+    JMP forever
 .endproc
 
 .proc write_megatile
