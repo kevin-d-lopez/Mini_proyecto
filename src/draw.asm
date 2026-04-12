@@ -2,6 +2,7 @@
 
 .segment "ZEROPAGE"
 .importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y, timer
+.importzp coin_active
 
 baseLo:      .res 1
 baseHi:      .res 1
@@ -104,6 +105,24 @@ player_dir:  .res 1
   TXA
   PHA
 
+  LDA coin_active
+  BNE coin_visible
+  LDX #$00
+hide_coin_oam:
+  LDA #$FF
+  STA $0220,X
+  INX
+  INX
+  INX
+  INX
+  CPX #$10
+  BNE hide_coin_oam
+  PLA
+  TAX
+  PLA
+  RTS
+
+coin_visible:
   observing_animation:
   LDA timer
   AND #%00100000

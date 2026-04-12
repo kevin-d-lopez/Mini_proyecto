@@ -33,11 +33,19 @@ coin_hit_b: .res 1
 .exportzp coin_hit_l, coin_hit_r, coin_hit_t, coin_hit_b
 
 ; player parameters
-player_lives: .res 1
-player_score: .res 1
+player_lives:   .res 1
+player_score:   .res 1
+player_iframes: .res 1
+coin_active:    .res 1
+game_paused:    .res 1
+prev_controller1: .res 1
+rand_l:         .res 1
+rand_h:         .res 1
 player_spe:  .res 1
 enemy_spe:   .res 1
-.exportzp player_spe, enemy_spe, player_lives
+.exportzp player_spe, enemy_spe, player_lives, player_score
+.exportzp player_iframes, coin_active, game_paused, prev_controller1
+.exportzp rand_l, rand_h
 
 ; controller
 controller1: .res 1
@@ -54,7 +62,7 @@ nmi_counter: .res 1
 
 .import read_controller1
 .import draw_player, draw_enemy, draw_coin
-.import update_player, update_enemy
+.import update_player, update_enemy, update_interactions, handle_pause_input
 
 .proc nmi_handler
   ; copy the memory from $0200-$02ff into OAM
@@ -68,22 +76,41 @@ nmi_counter: .res 1
   STA PPUSCROLL
   STA PPUSCROLL
 
-  ; read controller input and update player position every 4 nmi frames
+  JSR read_controller1
+  JSR handle_pause_input
+
+  LDA game_paused
+  BNE paused_frame
+
+  LDA player_iframes
+  BEQ ifr_done
+  DEC player_iframes
+ifr_done:
+
+  ; game logic every 4 nmi frames
   LDA nmi_counter
   AND #$03
-  BNE draw
-  JSR read_controller1
+  BNE after_logic
   JSR update_player
   JSR update_enemy
+  JSR update_interactions
 
-  draw:
-  ; once player position is updated, draw the player
+after_logic:
+  JMP draw_sprites
+
+paused_frame:
+  ; freeze: no movement, timer, or logic tick advancement
+
+draw_sprites:
   JSR draw_player
   JSR draw_enemy
   JSR draw_coin
 
+  LDA game_paused
+  BNE skip_advances
   INC nmi_counter
   INC timer
+skip_advances:
   RTI
 .endproc
 

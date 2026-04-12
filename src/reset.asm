@@ -3,6 +3,8 @@
 .segment "ZEROPAGE"
 ; zeropage variables from main.asm
 .importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y, player_spe, timer, nmi_counter, enemy_spe
+.importzp player_lives, player_score, player_iframes, coin_active, game_paused, prev_controller1
+.importzp rand_l, rand_h
 
 ; zeropage variables from draw.asm
 .importzp baseLo, baseHi, sprite_attr, player_dir
@@ -63,6 +65,21 @@ clear_oam:
 
   LDA #INITIAL_ENEMY_SPE
   STA enemy_spe
+
+  LDA #INITIAL_PLAYER_LIVES
+  STA player_lives
+  LDA #$00
+  STA player_score
+  STA player_iframes
+  LDA #$01
+  STA coin_active
+  LDA #$00
+  STA game_paused
+  STA prev_controller1
+  LDA #$C5
+  STA rand_l
+  LDA #$9A
+  STA rand_h
 
   ; initialize player attributes, initial direction, and a timer to $00
   LDA #$00

@@ -51,3 +51,11 @@ COIN_HIT_H     = 16
 
 ; Packed megatile row index for "backg" (.byte $08,$09,$18,$19) — walkable floor
 METATILE_IDX_BACKG = 3
+
+INITIAL_PLAYER_LIVES = 3
+DAMAGE_IFRAMES       = 60
+
+MAX_PLAYER_SPE = $08
+MAX_ENEMY_SPE  = $06
+
+COIN_RESPAWN_ATTEMPTS = 64

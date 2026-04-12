@@ -1,11 +1,15 @@
 .include "constants.inc"
 
 .segment "ZEROPAGE"
-.importzp player_dir, player_spe
+.importzp player_dir
 .importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y
 .importzp player_hit_l, player_hit_r, player_hit_t, player_hit_b
 .importzp enemy_hit_l, enemy_hit_r, enemy_hit_t, enemy_hit_b
 .importzp coin_hit_l, coin_hit_r, coin_hit_t, coin_hit_b
+.importzp player_lives, player_score, player_iframes, coin_active
+.importzp player_spe, enemy_spe
+.importzp game_paused, prev_controller1
+.importzp rand_l, rand_h
 .importzp controller1
 
 ; scratch for metatile ↔ pixel mapping (update logic only)
@@ -20,6 +24,7 @@ coll_megabyte: .res 1
 .segment "CODE"
 .import background
 .export update_player, update_enemy, update_player_hitbox, update_enemy_hitbox, update_coin_hitbox
+.export update_interactions, handle_pause_input
 
 .proc update_player_dir
   LDA controller1  ; load button presses
@@ -260,6 +265,231 @@ coll_megabyte: .res 1
   RTS
 .endproc
 
+.proc coin_spawn_blocked
+  LDA coin_hit_l
+  LDY coin_hit_t
+  JSR metatile_point_solid
+  BCS csb_yes
+  LDA coin_hit_r
+  LDY coin_hit_t
+  JSR metatile_point_solid
+  BCS csb_yes
+  LDA coin_hit_l
+  LDY coin_hit_b
+  JSR metatile_point_solid
+  BCS csb_yes
+  LDA coin_hit_r
+  LDY coin_hit_b
+  JSR metatile_point_solid
+  BCS csb_yes
+  CLC
+  RTS
+csb_yes:
+  SEC
+  RTS
+.endproc
+
+.proc player_take_damage
+  LDA player_iframes
+  BNE ptd_done
+  LDA player_lives
+  BEQ ptd_done
+  DEC player_lives
+  LDA #DAMAGE_IFRAMES
+  STA player_iframes
+ptd_done:
+  RTS
+.endproc
+
+.proc rand_byte
+  LDA rand_l
+  ASL A
+  ROL rand_h
+  BCC rand_done
+  LDA rand_l
+  EOR #$B4
+  STA rand_l
+  LDA rand_h
+  EOR #$C1
+  STA rand_h
+rand_done:
+  LDA rand_l
+  EOR rand_h
+  RTS
+.endproc
+
+.proc player_enemy_overlap
+  LDA player_hit_r
+  CMP enemy_hit_l
+  BCC peo_no
+  LDA enemy_hit_r
+  CMP player_hit_l
+  BCC peo_no
+  LDA player_hit_b
+  CMP enemy_hit_t
+  BCC peo_no
+  LDA enemy_hit_b
+  CMP player_hit_t
+  BCC peo_no
+  SEC
+  RTS
+peo_no:
+  CLC
+  RTS
+.endproc
+
+.proc player_coin_overlap
+  LDA player_hit_r
+  CMP coin_hit_l
+  BCC pco_no
+  LDA coin_hit_r
+  CMP player_hit_l
+  BCC pco_no
+  LDA player_hit_b
+  CMP coin_hit_t
+  BCC pco_no
+  LDA coin_hit_b
+  CMP player_hit_t
+  BCC pco_no
+  SEC
+  RTS
+pco_no:
+  CLC
+  RTS
+.endproc
+
+.proc coin_overlaps_actor
+  LDA coin_hit_r
+  CMP player_hit_l
+  BCC coa_try_enemy
+  LDA player_hit_r
+  CMP coin_hit_l
+  BCC coa_try_enemy
+  LDA coin_hit_b
+  CMP player_hit_t
+  BCC coa_try_enemy
+  LDA player_hit_b
+  CMP coin_hit_t
+  BCC coa_try_enemy
+  SEC
+  RTS
+coa_try_enemy:
+  LDA coin_hit_r
+  CMP enemy_hit_l
+  BCC coa_clear
+  LDA enemy_hit_r
+  CMP coin_hit_l
+  BCC coa_clear
+  LDA coin_hit_b
+  CMP enemy_hit_t
+  BCC coa_clear
+  LDA enemy_hit_b
+  CMP coin_hit_t
+  BCC coa_clear
+  SEC
+  RTS
+coa_clear:
+  CLC
+  RTS
+.endproc
+
+.proc respawn_coin_random
+  LDX #0
+rc_try:
+  JSR rand_byte
+  AND #$1F
+  CMP #1
+  BCC rc_next
+  CMP #29
+  BCS rc_next
+  ASL A
+  ASL A
+  ASL A
+  STA coin_x
+
+  JSR rand_byte
+  AND #$1F
+  CMP #3
+  BCC rc_next
+  CMP #29
+  BCS rc_next
+  ASL A
+  ASL A
+  ASL A
+  STA coin_y
+
+  JSR update_coin_hitbox
+  JSR coin_spawn_blocked
+  BCS rc_next
+  JSR coin_overlaps_actor
+  BCS rc_next
+
+  LDA #1
+  STA coin_active
+  RTS
+
+rc_next:
+  INX
+  CPX #COIN_RESPAWN_ATTEMPTS
+  BNE rc_try
+
+  LDA #INITIAL_COIN_X
+  STA coin_x
+  LDA #INITIAL_COIN_Y
+  STA coin_y
+  LDA #1
+  STA coin_active
+  JSR update_coin_hitbox
+  RTS
+.endproc
+
+.proc update_interactions
+  JSR player_enemy_overlap
+  BCC ui_coin
+  JSR player_take_damage
+
+ui_coin:
+  LDA coin_active
+  BEQ ui_done
+  JSR player_coin_overlap
+  BCC ui_done
+
+  INC player_score
+
+  LDA player_spe
+  CMP #MAX_PLAYER_SPE
+  BCS ui_sp
+  INC player_spe
+ui_sp:
+
+  LDA enemy_spe
+  CMP #MAX_ENEMY_SPE
+  BCS ui_se
+  INC enemy_spe
+ui_se:
+
+  JSR respawn_coin_random
+
+ui_done:
+  RTS
+.endproc
+
+.proc handle_pause_input
+  LDA controller1
+  AND #BTN_START
+  BEQ hp_store
+  LDA prev_controller1
+  AND #BTN_START
+  BNE hp_store
+  LDA game_paused
+  EOR #$01
+  STA game_paused
+hp_store:
+  LDA controller1
+  STA prev_controller1
+  RTS
+.endproc
+
 .proc update_player
   PHA
   TXA
@@ -291,6 +521,7 @@ coll_megabyte: .res 1
   revert_move_x:
   PLA
   STA player_x
+  JSR player_take_damage
   JMP end_move_sprite
 
   move_down:
@@ -307,6 +538,7 @@ coll_megabyte: .res 1
   revert_move_y:
   PLA
   STA player_y
+  JSR player_take_damage
   JMP end_move_sprite
 
   move_left:
@@ -323,6 +555,7 @@ coll_megabyte: .res 1
   revert_move_x2:
   PLA
   STA player_x
+  JSR player_take_damage
   JMP end_move_sprite
 
   move_up:
@@ -339,6 +572,7 @@ coll_megabyte: .res 1
   revert_move_y2:
   PLA
   STA player_y
+  JSR player_take_damage
   JMP end_move_sprite
 
   end_move_sprite:
