@@ -14,12 +14,30 @@ enemy_x:  .res 1
 enemy_y:  .res 1
 coin_x:   .res 1
 coin_y:   .res 1
+; player AABB in screen pixels (left/right/top/bottom inclusive)
+player_hit_l: .res 1
+player_hit_r: .res 1
+player_hit_t: .res 1
+player_hit_b: .res 1
+enemy_hit_l: .res 1
+enemy_hit_r: .res 1
+enemy_hit_t: .res 1
+enemy_hit_b: .res 1
+coin_hit_l: .res 1
+coin_hit_r: .res 1
+coin_hit_t: .res 1
+coin_hit_b: .res 1
 .exportzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y
+.exportzp player_hit_l, player_hit_r, player_hit_t, player_hit_b
+.exportzp enemy_hit_l, enemy_hit_r, enemy_hit_t, enemy_hit_b
+.exportzp coin_hit_l, coin_hit_r, coin_hit_t, coin_hit_b
 
 ; player parameters
+player_lives: .res 1
+player_score: .res 1
 player_spe:  .res 1
 enemy_spe:   .res 1
-.exportzp player_spe, enemy_spe
+.exportzp player_spe, enemy_spe, player_lives
 
 ; controller
 controller1: .res 1
@@ -313,6 +331,7 @@ hud:
   .byte $20,$21,$22,$23,$24,$25,$c6,$c6,$c6,$c6,$c6,$19,$18,$ff,$ff,$ff
   .byte $18,$19,$18,$19,$7d,$19,$18,$19,$4b,$19,$27,$28,$fe,$ff,$ff,$19
 
+.export background
 background:
 	.byte %00000000, %00000000, %00000000, %00000000
 	.byte %00011111, %11111111, %11111111, %11111100

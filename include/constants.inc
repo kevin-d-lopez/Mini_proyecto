@@ -30,3 +30,24 @@ INITIAL_COIN_Y   = $C0
 ; player initial parameters
 INITIAL_PLAYER_SPE = $02
 INITIAL_ENEMY_SPE  = $01
+
+; player hitbox (pixels, inclusive edges; relative to sprite top-left player_x/player_y)
+PLAYER_HIT_X_OFS = 0
+PLAYER_HIT_Y_OFS = 0
+PLAYER_HIT_W     = 16
+PLAYER_HIT_H     = 16
+
+; enemy hitbox (same convention, relative to enemy_x/enemy_y)
+ENEMY_HIT_X_OFS = 0
+ENEMY_HIT_Y_OFS = 0
+ENEMY_HIT_W     = 16
+ENEMY_HIT_H     = 16
+
+; coin hitbox (write_coin_sprite is 2×2 tiles from coin_x/coin_y)
+COIN_HIT_X_OFS = 0
+COIN_HIT_Y_OFS = 0
+COIN_HIT_W     = 16
+COIN_HIT_H     = 16
+
+; Packed megatile row index for "backg" (.byte $08,$09,$18,$19) — walkable floor
+METATILE_IDX_BACKG = 3

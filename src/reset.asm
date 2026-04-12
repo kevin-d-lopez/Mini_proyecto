@@ -9,6 +9,9 @@
 
 .segment "CODE"
 .import main
+.import update_player_hitbox
+.import update_enemy_hitbox
+.import update_coin_hitbox
 .export reset_handler
 .proc reset_handler
   SEI
@@ -41,16 +44,19 @@ clear_oam:
   STA player_x
   LDA #INITIAL_PLAYER_Y
   STA player_y
+  JSR update_player_hitbox
 
   LDA #INITIAL_ENEMY_X
   STA enemy_x
   LDA #INITIAL_ENEMY_Y
   STA enemy_y
+  JSR update_enemy_hitbox
 
   LDA #INITIAL_COIN_X
   STA coin_x
   LDA #INITIAL_COIN_Y
   STA coin_y
+  JSR update_coin_hitbox
 
   LDA #INITIAL_PLAYER_SPE
   STA player_spe

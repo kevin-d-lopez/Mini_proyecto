@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Make sure to run this script from the project's root directory.
-# Usage: ./scripts/build.sh 
+# Run from repo root or from scripts/; paths are resolved from the project root.
+# Usage: ./scripts/build.sh   or   cd scripts && ./build.sh
 
 ### Script Configuration ###
 project_name="CoinCollector"
@@ -19,8 +19,9 @@ ld65_path="ld65"
 
 ### Start Script ###
 
-# Get the working directory path
-dir="$PWD"
+# Project root = parent of the directory containing this script
+cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
+dir="$(pwd)"
 
 # Assemble the main file (i.e., src/main.asm)
 main_path="src/main.asm"
