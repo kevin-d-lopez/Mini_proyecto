@@ -5,6 +5,9 @@
 .importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y, player_spe, timer, nmi_counter, enemy_spe
 .importzp player_lives, player_score, player_iframes, coin_active, game_paused, prev_controller1
 .importzp rand_l, rand_h
+.importzp game_over
+.importzp game_over_done
+.importzp coin_cooldown
 
 ; zeropage variables from draw.asm
 .importzp baseLo, baseHi, sprite_attr, player_dir
@@ -76,6 +79,9 @@ clear_oam:
   LDA #$00
   STA game_paused
   STA prev_controller1
+  STA game_over
+  STA game_over_done
+  STA coin_cooldown
   LDA #$C5
   STA rand_l
   LDA #$9A

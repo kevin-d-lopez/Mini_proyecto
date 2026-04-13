@@ -1,4 +1,5 @@
 .include "constants.inc"
+.include "game_over_screen.inc"
 .include "header.inc"
 
 .segment "ZEROPAGE"
@@ -41,11 +42,18 @@ game_paused:    .res 1
 prev_controller1: .res 1
 rand_l:         .res 1
 rand_h:         .res 1
+game_over:      .res 1
+game_over_done: .res 1
+nt_tmp_lo:      .res 1
+nt_tmp_hi:      .res 1
 player_spe:  .res 1
 enemy_spe:   .res 1
+coin_cooldown: .res 1
 .exportzp player_spe, enemy_spe, player_lives, player_score
+.exportzp coin_cooldown
 .exportzp player_iframes, coin_active, game_paused, prev_controller1
 .exportzp rand_l, rand_h
+.exportzp game_over, game_over_done
 
 ; controller
 controller1: .res 1
@@ -77,6 +85,10 @@ nmi_counter: .res 1
   STA PPUSCROLL
 
   JSR read_controller1
+
+  LDA game_over
+  BNE nmi_game_over
+
   JSR handle_pause_input
 
   LDA game_paused
@@ -100,18 +112,95 @@ after_logic:
 
 paused_frame:
   ; freeze: no movement, timer, or logic tick advancement
+  JMP draw_sprites
+
+nmi_game_over:
+  LDA game_over_done
+  BNE nmi_go_after_nt
+  JSR ppu_write_game_over
+  JSR oam_hide_all_sprites
+  LDA #$01
+  STA game_over_done
+nmi_go_after_nt:
+  JMP nmi_tail_idle
 
 draw_sprites:
   JSR draw_player
   JSR draw_enemy
   JSR draw_coin
 
+nmi_tail_advance:
   LDA game_paused
   BNE skip_advances
   INC nmi_counter
   INC timer
 skip_advances:
   RTI
+
+nmi_tail_idle:
+  RTI
+.endproc
+
+; One-shot: writes "GAME OVER" tiles (see game_over_screen.inc) and resets scroll.
+.proc ppu_write_game_over
+  LDX PPUSTATUS
+
+  LDA #$00
+  STA nt_tmp_hi
+  LDA #GAME_OVER_NMT_ROW
+  LDX #$05
+go_mul32:
+  ASL A
+  ROL nt_tmp_hi
+  DEX
+  BNE go_mul32
+
+  CLC
+  ADC #GAME_OVER_NMT_COL
+  STA nt_tmp_lo
+  LDA nt_tmp_hi
+  ADC #$00
+  STA nt_tmp_hi
+
+  LDA nt_tmp_lo
+  CLC
+  ADC #$00
+  STA nt_tmp_lo
+  LDA nt_tmp_hi
+  ADC #$20
+  STA nt_tmp_hi
+
+  LDX PPUSTATUS
+  LDA nt_tmp_hi
+  STA PPUADDR
+  LDA nt_tmp_lo
+  STA PPUADDR
+
+  LDX #$00
+go_wr_tile:
+  LDA game_over_msg,X
+  STA PPUDATA
+  INX
+  CPX #GAME_OVER_LEN
+  BNE go_wr_tile
+
+  LDA #$00
+  STA PPUSCROLL
+  STA PPUSCROLL
+  RTS
+.endproc
+
+.proc oam_hide_all_sprites
+  LDX #$00
+  LDA #$FF
+go_hide_oam:
+  STA $0200,X
+  INX
+  INX
+  INX
+  INX
+  BNE go_hide_oam
+  RTS
 .endproc
 
 .import reset_handler
@@ -345,6 +434,12 @@ palettes:
   .byte $2B, $03, $14, $24
   .byte $2B, $0F, $38, $28
   .byte $2B, $0F, $16, $26
+
+; Tile order: G A M E [space] O V E R — indices from include/game_over_screen.inc
+game_over_msg:
+  .byte GAME_OVER_T_G, GAME_OVER_T_A, GAME_OVER_T_M, GAME_OVER_T_E1
+  .byte GAME_OVER_T_SPACE, GAME_OVER_T_O, GAME_OVER_T_V, GAME_OVER_T_E2
+  .byte GAME_OVER_T_R
 
 metatiles:
   .byte $00, $01, $10, $11  ; meta1

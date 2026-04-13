@@ -59,3 +59,6 @@ MAX_PLAYER_SPE = $08
 MAX_ENEMY_SPE  = $06
 
 COIN_RESPAWN_ATTEMPTS = 64
+
+; Logic ticks before coin pickup can register again (avoids double-collect / speed spike)
+COIN_PICKUP_COOLDOWN = 12

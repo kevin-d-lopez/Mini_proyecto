@@ -7,6 +7,8 @@
 .importzp enemy_hit_l, enemy_hit_r, enemy_hit_t, enemy_hit_b
 .importzp coin_hit_l, coin_hit_r, coin_hit_t, coin_hit_b
 .importzp player_lives, player_score, player_iframes, coin_active
+.importzp game_over
+.importzp coin_cooldown
 .importzp player_spe, enemy_spe
 .importzp game_paused, prev_controller1
 .importzp rand_l, rand_h
@@ -297,6 +299,10 @@ csb_yes:
   DEC player_lives
   LDA #DAMAGE_IFRAMES
   STA player_iframes
+  LDA player_lives
+  BNE ptd_done
+  LDA #$01
+  STA game_over
 ptd_done:
   RTS
 .endproc
@@ -440,15 +446,44 @@ rc_next:
   LDA #1
   STA coin_active
   JSR update_coin_hitbox
+  JSR coin_spawn_blocked
+  BCS fb_nudge
+  JSR coin_overlaps_actor
+  BCC fb_ok
+
+fb_nudge:
+  LDX #$00
+fb_nudge_loop:
+  LDA coin_x
+  CLC
+  ADC #16
+  STA coin_x
+  JSR update_coin_hitbox
+  JSR coin_spawn_blocked
+  BCS fb_nudge_next
+  JSR coin_overlaps_actor
+  BCC fb_ok
+fb_nudge_next:
+  INX
+  CPX #$10
+  BNE fb_nudge_loop
+fb_ok:
   RTS
 .endproc
 
 .proc update_interactions
+  LDA coin_cooldown
+  BEQ ui_cd_done
+  DEC coin_cooldown
+ui_cd_done:
+
   JSR player_enemy_overlap
   BCC ui_coin
   JSR player_take_damage
 
 ui_coin:
+  LDA coin_cooldown
+  BNE ui_done
   LDA coin_active
   BEQ ui_done
   JSR player_coin_overlap
@@ -468,6 +503,8 @@ ui_sp:
   INC enemy_spe
 ui_se:
 
+  LDA #COIN_PICKUP_COOLDOWN
+  STA coin_cooldown
   JSR respawn_coin_random
 
 ui_done:
