@@ -62,3 +62,8 @@ COIN_RESPAWN_ATTEMPTS = 64
 
 ; Logic ticks before coin pickup can register again (avoids double-collect / speed spike)
 COIN_PICKUP_COOLDOWN = 12
+
+; Score as sprites: tiles $42–$4B = digits 0–9; align with nametable cell $2026 (row 1, col 6)
+SCORE_DIGIT_TILE_0 = $42
+SCORE_SPRITE_Y     = 8
+SCORE_SPRITE_X0    = 48

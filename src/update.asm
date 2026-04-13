@@ -9,7 +9,7 @@
 .importzp player_lives, player_score, player_iframes, coin_active
 .importzp game_over
 .importzp coin_cooldown
-.importzp player_spe, enemy_spe
+.importzp player_spe, enemy_spe, enemy_axis_phase
 .importzp game_paused, prev_controller1
 .importzp rand_l, rand_h
 .importzp controller1
@@ -26,7 +26,7 @@ coll_megabyte: .res 1
 .segment "CODE"
 .import background
 .export update_player, update_enemy, update_player_hitbox, update_enemy_hitbox, update_coin_hitbox
-.export update_interactions, handle_pause_input
+.export update_interactions, handle_pause_input, sync_enemy_speed_from_player
 
 .proc update_player_dir
   LDA controller1  ; load button presses
@@ -497,17 +497,33 @@ ui_coin:
   INC player_spe
 ui_sp:
 
-  LDA enemy_spe
-  CMP #MAX_ENEMY_SPE
-  BCS ui_se
-  INC enemy_spe
-ui_se:
+  JSR sync_enemy_speed_from_player
 
   LDA #COIN_PICKUP_COOLDOWN
   STA coin_cooldown
   JSR respawn_coin_random
 
 ui_done:
+  RTS
+.endproc
+
+; enemy_spe = min(MAX_ENEMY_SPE, max(1, player_spe - 1)) so enemy stays slower.
+.proc sync_enemy_speed_from_player
+  LDA player_spe
+  CMP #$01
+  BEQ sync_es_min
+  SEC
+  SBC #$01
+  JMP sync_es_cap
+sync_es_min:
+  LDA #$01
+sync_es_cap:
+  CMP #MAX_ENEMY_SPE
+  BCC sync_es_store
+  BEQ sync_es_store
+  LDA #MAX_ENEMY_SPE
+sync_es_store:
+  STA enemy_spe
   RTS
 .endproc
 
@@ -620,61 +636,73 @@ hp_store:
   RTS
 .endproc
 
+; One axis per logic tick (alternates X / Y) so total step matches player style.
 .proc update_enemy
   PHA
   TXA
   PHA
 
+  LDA enemy_axis_phase
+  BNE enemy_tick_y
+
   LDA enemy_x
   PHA
   LDA player_x
   CMP enemy_x
-  BCS enemy_move_right
-
-  enemy_move_left:
-  DEC enemy_x
-  JMP enemy_after_x_try
-
-  enemy_move_right:
-  INC enemy_x
-
-  enemy_after_x_try:
+  BCS en_x_right
+  SEC
+  LDA enemy_x
+  SBC enemy_spe
+  STA enemy_x
+  JMP en_after_x
+en_x_right:
+  CLC
+  LDA enemy_x
+  ADC enemy_spe
+  STA enemy_x
+en_after_x:
   JSR update_enemy_hitbox
   JSR metatile_enemy_blocked
-  BCS enemy_revert_x
+  BCS en_rev_x
   PLA
-  JMP enemy_x_ok
-  enemy_revert_x:
+  JMP en_toggle_phase
+en_rev_x:
   PLA
   STA enemy_x
   JSR update_enemy_hitbox
+  JMP en_toggle_phase
 
-  enemy_x_ok:
+enemy_tick_y:
   LDA enemy_y
   PHA
   LDA player_y
   CMP enemy_y
-  BCS enemy_move_down
-
-  enemy_move_up:
-  DEC enemy_y
-  JMP enemy_after_y_try
-
-  enemy_move_down:
-  INC enemy_y
-
-  enemy_after_y_try:
+  BCS en_y_down
+  SEC
+  LDA enemy_y
+  SBC enemy_spe
+  STA enemy_y
+  JMP en_after_y
+en_y_down:
+  CLC
+  LDA enemy_y
+  ADC enemy_spe
+  STA enemy_y
+en_after_y:
   JSR update_enemy_hitbox
   JSR metatile_enemy_blocked
-  BCS enemy_revert_y
+  BCS en_rev_y
   PLA
-  JMP end_move_sprite
-  enemy_revert_y:
+  JMP en_toggle_phase
+en_rev_y:
   PLA
   STA enemy_y
-
-  end_move_sprite:
   JSR update_enemy_hitbox
+
+en_toggle_phase:
+  LDA enemy_axis_phase
+  EOR #$01
+  STA enemy_axis_phase
   PLA
   TAX
   PLA

@@ -48,8 +48,10 @@ nt_tmp_lo:      .res 1
 nt_tmp_hi:      .res 1
 player_spe:  .res 1
 enemy_spe:   .res 1
+enemy_axis_phase: .res 1
 coin_cooldown: .res 1
 .exportzp player_spe, enemy_spe, player_lives, player_score
+.exportzp enemy_axis_phase
 .exportzp coin_cooldown
 .exportzp player_iframes, coin_active, game_paused, prev_controller1
 .exportzp rand_l, rand_h
@@ -69,7 +71,7 @@ nmi_counter: .res 1
 .endproc
 
 .import read_controller1
-.import draw_player, draw_enemy, draw_coin
+.import draw_player, draw_enemy, draw_coin, draw_score_sprites
 .import update_player, update_enemy, update_interactions, handle_pause_input
 
 .proc nmi_handler
@@ -128,6 +130,7 @@ draw_sprites:
   JSR draw_player
   JSR draw_enemy
   JSR draw_coin
+  JSR draw_score_sprites
 
 nmi_tail_advance:
   LDA game_paused

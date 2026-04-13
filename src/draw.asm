@@ -3,6 +3,7 @@
 .segment "ZEROPAGE"
 .importzp player_x, player_y, enemy_x, enemy_y, coin_x, coin_y, timer
 .importzp coin_active
+.importzp player_score
 
 baseLo:      .res 1
 baseHi:      .res 1
@@ -12,7 +13,7 @@ player_dir:  .res 1
 .exportzp baseLo, baseHi, tileIndex, sprite_attr, player_dir
 
 .segment "CODE"
-.export draw_player, draw_enemy, draw_coin
+.export draw_player, draw_enemy, draw_coin, draw_score_sprites
 
 .proc draw_player
   PHA
@@ -139,6 +140,79 @@ coin_visible:
   ASL A
   STA tileIndex
   JSR write_coin_sprite
+
+  PLA
+  TAX
+  PLA
+  RTS
+.endproc
+
+; Three OAM sprites at $0230: hundreds, tens, ones. Tiles = SCORE_DIGIT_TILE_0 + digit.
+; Position matches nametable cell $2026 (row 1, col 6) and two cells to the right.
+.proc draw_score_sprites
+  PHA
+  TXA
+  PHA
+
+  LDA player_score
+  LDX #$00
+ds_h100:
+  CMP #100
+  BCC ds_h100d
+  SEC
+  SBC #100
+  INX
+  JMP ds_h100
+ds_h100d:
+  STX tileIndex
+  LDY #$00
+ds_t10:
+  CMP #10
+  BCC ds_t10d
+  SEC
+  SBC #10
+  INY
+  JMP ds_t10
+ds_t10d:
+  ; A=ones, Y=tens, hundreds in tileIndex
+  PHA
+  TYA
+  PHA
+  LDA tileIndex
+  PHA
+
+  LDA #SCORE_SPRITE_Y
+  STA $0230
+  PLA
+  CLC
+  ADC #SCORE_DIGIT_TILE_0
+  STA $0231
+  LDA #$00
+  STA $0232
+  LDA #SCORE_SPRITE_X0
+  STA $0233
+
+  LDA #SCORE_SPRITE_Y
+  STA $0234
+  PLA
+  CLC
+  ADC #SCORE_DIGIT_TILE_0
+  STA $0235
+  LDA #$00
+  STA $0236
+  LDA #SCORE_SPRITE_X0 + 8
+  STA $0237
+
+  LDA #SCORE_SPRITE_Y
+  STA $0238
+  PLA
+  CLC
+  ADC #SCORE_DIGIT_TILE_0
+  STA $0239
+  LDA #$00
+  STA $023A
+  LDA #SCORE_SPRITE_X0 + 16
+  STA $023B
 
   PLA
   TAX

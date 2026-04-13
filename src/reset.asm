@@ -8,6 +8,7 @@
 .importzp game_over
 .importzp game_over_done
 .importzp coin_cooldown
+.importzp enemy_axis_phase
 
 ; zeropage variables from draw.asm
 .importzp baseLo, baseHi, sprite_attr, player_dir
@@ -17,6 +18,7 @@
 .import update_player_hitbox
 .import update_enemy_hitbox
 .import update_coin_hitbox
+.import sync_enemy_speed_from_player
 .export reset_handler
 .proc reset_handler
   SEI
@@ -65,9 +67,9 @@ clear_oam:
 
   LDA #INITIAL_PLAYER_SPE
   STA player_spe
-
-  LDA #INITIAL_ENEMY_SPE
-  STA enemy_spe
+  JSR sync_enemy_speed_from_player
+  LDA #$00
+  STA enemy_axis_phase
 
   LDA #INITIAL_PLAYER_LIVES
   STA player_lives
